@@ -57,12 +57,17 @@ function downloadUsers() {
   a.click();
 }
 
-var session = JSON.parse(localStorage.getItem("hydra_session"));
-if (session) {
-  showScreen("converter");
-  var ud = document.getElementById("userDisplay");
-  if (ud) ud.textContent = "Bienvenido, " + session.username;
-} else {
+try {
+  var sessionData = localStorage.getItem("hydra_session");
+  var session = sessionData ? JSON.parse(sessionData) : null;
+  if (session && session.username) {
+    showScreen("converter");
+    var ud = document.getElementById("userDisplay");
+    if (ud) ud.textContent = "Bienvenido, " + session.username;
+  } else {
+    showScreen("auth");
+  }
+} catch(e) {
   showScreen("auth");
 }
 
@@ -106,8 +111,10 @@ function register() {
 
   users.push({ username: username, password: password });
   localStorage.setItem("hydra_users", JSON.stringify(users));
-  msg("Registro exitoso. Ahora inicia sesión.", false);
-  showForm("login");
+  localStorage.setItem("hydra_session", JSON.stringify({ username: username, password: password }));
+  var userDisplay = document.getElementById("userDisplay");
+  if (userDisplay) userDisplay.textContent = "Bienvenido, " + username;
+  showScreen("converter");
 }
 
 function login() {
