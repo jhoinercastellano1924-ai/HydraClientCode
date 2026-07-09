@@ -24,14 +24,15 @@ function showSection(name) {
 function refreshUsersInner() {
   var list = document.getElementById("usersListInner");
   if (!list) return;
-  var users = JSON.parse(localStorage.getItem("hydra_users") || "[]");
-  if (users.length === 0) { list.innerHTML = "<div style='text-align:center;color:#666;padding:20px;'>No hay usuarios registrados</div>"; return; }
-  var html = "<div style='border-bottom:1px solid var(--accent);padding:8px 0;color:var(--accent);font-size:14px;'>USUARIO</div>";
-  for (var i = 0; i < users.length; i++) {
-    html += "<div style='padding:8px 0;border-bottom:1px solid rgba(0,51,204,0.2);display:flex;justify-content:space-between;'>" +
-      "<span>" + users[i].username + "</span></div>";
-  }
-  list.innerHTML = html;
+  db.collection("users").get().then(function(snapshot) {
+    if (snapshot.empty) { list.innerHTML = "<div style='text-align:center;color:#666;padding:20px;'>No hay usuarios registrados</div>"; return; }
+    var html = "<div style='border-bottom:1px solid var(--accent);padding:8px 0;color:var(--accent);font-size:14px;'>USUARIO</div>";
+    snapshot.forEach(function(doc) {
+      var u = doc.data();
+      html += "<div style='padding:8px 0;border-bottom:1px solid rgba(0,51,204,0.2);display:flex;justify-content:space-between;'><span>" + u.username + "</span></div>";
+    });
+    list.innerHTML = html;
+  });
 }
 
 function showScreen(name) {
@@ -42,58 +43,82 @@ function showScreen(name) {
 
 function clearAllData() {
   if (confirm("¿Borrar TODO (usuarios y sesión)? Esto no se puede deshacer.")) {
-    localStorage.removeItem("hydra_users");
-    localStorage.removeItem("hydra_session");
-    location.reload();
+    var user = auth.currentUser;
+    if (user) {
+      user.delete().then(function() { location.reload(); }).catch(function() { location.reload(); });
+    } else { location.reload(); }
   }
 }
 
 function downloadUsers() {
-  if (users.length === 0) { alert("No hay usuarios registrados en este navegador"); return; }
-  var text = "=== HYDRA CLIENT CODE - USUARIOS REGISTRADOS ===\r\n";
-  text += "Fecha: " + new Date().toLocaleString() + "\r\n";
-  text += "Total: " + users.length + " usuarios\r\n";
-  text += "========================================\r\n\r\n";
-  for (var i = 0; i < users.length; i++) {
-    text += (i+1) + ". " + users[i].username + "\r\n";
-  }
-  var blob = new Blob([text], { type: "text/plain" });
-  var a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "usuarios_hydra.txt";
-  a.click();
+  db.collection("users").get().then(function(snapshot) {
+    if (snapshot.empty) { alert("No hay usuarios registrados"); return; }
+    var text = "=== HYDRA CLIENT CODE - USUARIOS REGISTRADOS ===\r\n";
+    text += "Fecha: " + new Date().toLocaleString() + "\r\n";
+    text += "Total: " + snapshot.size + " usuarios\r\n";
+    text += "========================================\r\n\r\n";
+    snapshot.forEach(function(doc) {
+      var u = doc.data();
+      text += u.username + "\r\n";
+    });
+    var blob = new Blob([text], { type: "text/plain" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "usuarios_hydra.txt";
+    a.click();
+  });
 }
 
-// Limpia localStorage corrupto al cargar
-try {
-  var usersData = localStorage.getItem("hydra_users");
-  var sessionData = localStorage.getItem("hydra_session");
-  if (usersData) { JSON.parse(usersData); }
-  if (sessionData) { JSON.parse(sessionData); }
-} catch(e) {
-  localStorage.removeItem("hydra_users");
-  localStorage.removeItem("hydra_session");
-  console.log("localStorage limpiado por datos corruptos");
+function refreshUsersInner() {
+  var list = document.getElementById("usersListInner");
+  if (!list) return;
+  db.collection("users").get().then(function(snapshot) {
+    if (snapshot.empty) { list.innerHTML = "<div style='text-align:center;color:#666;padding:20px;'>No hay usuarios registrados</div>"; return; }
+    var html = "<div style='border-bottom:1px solid var(--accent);padding:8px 0;color:var(--accent);font-size:14px;'>USUARIO</div>";
+    snapshot.forEach(function(doc) {
+      var u = doc.data();
+      html += "<div style='padding:8px 0;border-bottom:1px solid rgba(0,51,204,0.2);display:flex;justify-content:space-between;'><span>" + u.username + "</span></div>";
+    });
+    list.innerHTML = html;
+  });
 }
 
-try {
-  var sessionData = localStorage.getItem("hydra_session");
-  var session = sessionData ? JSON.parse(sessionData) : null;
-  console.log("Sesión al cargar:", session);
-  if (session && session.username) {
-    showScreen("converter");
-    var ud = document.getElementById("userDisplay");
-    if (ud) ud.textContent = "Bienvenido, " + session.username;
-  } else {
-    showScreen("auth");
-  }
-} catch(e) {
-  showScreen("auth");
+function showScreen(name) {
+  document.getElementById("authScreen").classList.remove("active");
+  document.getElementById("converterScreen").classList.remove("active");
+  document.getElementById(name === "auth" ? "authScreen" : "converterScreen").classList.add("active");
 }
 
 function logout() {
-  localStorage.removeItem("hydra_session");
-  showScreen("auth");
+  auth.signOut().then(function() { showScreen("auth"); });
+}
+
+function clearAllData() {
+  if (confirm("¿Borrar TODO (usuarios y sesión)? Esto no se puede deshacer.")) {
+    var user = auth.currentUser;
+    if (user) {
+      user.delete().then(function() { location.reload(); }).catch(function() { location.reload(); });
+    } else { location.reload(); }
+  }
+}
+
+function downloadUsers() {
+  db.collection("users").get().then(function(snapshot) {
+    if (snapshot.empty) { alert("No hay usuarios registrados"); return; }
+    var text = "=== HYDRA CLIENT CODE - USUARIOS REGISTRADOS ===\r\n";
+    text += "Fecha: " + new Date().toLocaleString() + "\r\n";
+    text += "Total: " + snapshot.size + " usuarios\r\n";
+    text += "========================================\r\n\r\n";
+    snapshot.forEach(function(doc) {
+      var u = doc.data();
+      text += u.username + "\r\n";
+    });
+    var blob = new Blob([text], { type: "text/plain" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "usuarios_hydra.txt";
+    a.click();
+  });
 }
 
 function msg(text, isError) {
@@ -126,37 +151,80 @@ function register() {
   if (password.length < 6) { msg("La contraseña debe tener al menos 6 caracteres", true); return; }
   if (password !== confirm) { msg("Las contraseñas no coinciden", true); return; }
 
-  var users = JSON.parse(localStorage.getItem("hydra_users") || "[]");
-  if (users.find(function(u) { return u.username === username; })) { msg("Este usuario ya existe", true); return; }
-
-  users.push({ username: username, password: password });
-  localStorage.setItem("hydra_users", JSON.stringify(users));
-  localStorage.setItem("hydra_session", JSON.stringify({ username: username, password: password }));
-  console.log("Registrado:", username);
-  var userDisplay = document.getElementById("userDisplay");
-  if (userDisplay) userDisplay.textContent = "Bienvenido, " + username;
-  showScreen("converter");
+  var email = username + "@hydra.local";
+  auth.createUserWithEmailAndPassword(email, password)
+    .then(function(cred) {
+      cred.user.updateProfile({ displayName: username });
+      return db.collection("users").doc(cred.user.uid).set({ username: username, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    })
+    .then(function() {
+      msg("Registro exitoso. Iniciando sesión...", false);
+      setTimeout(function() { showScreen("converter"); }, 1000);
+    })
+    .catch(function(err) {
+      if (err.code === "auth/email-already-in-use") msg("Este usuario ya existe", true);
+      else msg("Error: " + err.message, true);
+    });
 }
 
 function login() {
-  var input = document.getElementById("loginUser").value.trim();
+  var username = document.getElementById("loginUser").value.trim();
   var password = document.getElementById("loginPassword").value;
 
-  if (!input || !password) { msg("Todos los campos son obligatorios", true); return; }
+  if (!username || !password) { msg("Todos los campos son obligatorios", true); return; }
 
-  var users = JSON.parse(localStorage.getItem("hydra_users") || "[]");
-  console.log("Usuarios guardados:", users);
-  console.log("Intentando login con:", input, password);
-  var user = users.find(function(u) { return u.username === input && u.password === password; });
-
-  if (!user) { msg("Usuario o contraseña incorrectos", true); return; }
-
-  localStorage.setItem("hydra_session", JSON.stringify(user));
-  console.log("Login exitoso:", user);
-  var userDisplay = document.getElementById("userDisplay");
-  if (userDisplay) userDisplay.textContent = "Bienvenido, " + user.username;
-  showScreen("converter");
+  var email = username + "@hydra.local";
+  auth.signInWithEmailAndPassword(email, password)
+    .then(function() {
+      showScreen("converter");
+    })
+    .catch(function(err) {
+      msg("Usuario o contraseña incorrectos", true);
+    });
 }
+
+function logout() {
+  auth.signOut().then(function() { showScreen("auth"); });
+}
+
+function clearAllData() {
+  if (confirm("¿Borrar TODO (usuarios y sesión)? Esto no se puede deshacer.")) {
+    var user = auth.currentUser;
+    if (user) {
+      user.delete().then(function() { location.reload(); }).catch(function() { location.reload(); });
+    } else { location.reload(); }
+  }
+}
+
+function downloadUsers() {
+  db.collection("users").get().then(function(snapshot) {
+    if (snapshot.empty) { alert("No hay usuarios registrados"); return; }
+    var text = "=== HYDRA CLIENT CODE - USUARIOS REGISTRADOS ===\r\n";
+    text += "Fecha: " + new Date().toLocaleString() + "\r\n";
+    text += "Total: " + snapshot.size + " usuarios\r\n";
+    text += "========================================\r\n\r\n";
+    snapshot.forEach(function(doc) {
+      var u = doc.data();
+      text += u.username + "\r\n";
+    });
+    var blob = new Blob([text], { type: "text/plain" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "usuarios_hydra.txt";
+    a.click();
+  });
+}
+
+auth.onAuthStateChanged(function(user) {
+  var ud = document.getElementById("userDisplay");
+  if (user) {
+    showScreen("converter");
+    if (ud) ud.textContent = "Bienvenido, " + user.displayName;
+    refreshUsersInner();
+  } else {
+    showScreen("auth");
+  }
+});
 
 var aobInput = document.getElementById("aobInput");
 var cppOutput = document.getElementById("cppOutput");
