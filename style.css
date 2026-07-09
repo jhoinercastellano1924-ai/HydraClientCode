@@ -1,0 +1,166 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0a0d1a;
+  --card-bg: rgba(8, 12, 30, 0.9);
+  --text: #0044ff;
+  --accent: #0044ff;
+  --box-glow: rgba(0, 68, 255, 0.5);
+  --shadow-hover: rgba(0, 68, 255, 0.7);
+  --input-bg: #000;
+  --text-soft: #4488ff;
+}
+
+body {
+  font-family: 'Orbitron', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  margin: 0;
+  padding-bottom: 90px;
+}
+
+#particles-js {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.card-container {
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 850px;
+  z-index: 2;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 2px solid var(--accent);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 0 50px var(--box-glow);
+  backdrop-filter: blur(14px);
+  transition: transform 0.15s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 0 60px var(--shadow-hover), 0 0 120px var(--box-glow);
+}
+
+.card h1 {
+  font-size: 42px;
+  margin-bottom: 30px;
+  text-shadow: 0 0 20px var(--accent);
+}
+
+.card input,
+.card pre {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--accent);
+  font-size: 18px;
+  margin-bottom: 25px;
+  box-shadow: 0 0 10px var(--accent);
+}
+
+pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.byte-count {
+  font-size: 22px;
+  color: var(--text-soft);
+  margin-bottom: 20px;
+  text-shadow: 0 0 8px var(--accent);
+}
+
+button#copyBtn {
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px var(--accent);
+}
+
+button#copyBtn:hover {
+  background: var(--accent);
+  color: var(--input-bg);
+  box-shadow: 0 0 20px var(--accent);
+}
+
+.footer {
+  position: static;
+  margin-top: 40px;
+  font-size: 18px;
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--accent);
+  font-weight: bold;
+  text-align: center;
+  padding: 10px 0;
+  z-index: 2;
+}
+
+.contact-section {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(8, 12, 30, 0.95);
+  padding: 18px 10px;
+  border-top: 1px solid var(--accent);
+  box-shadow: 0 -5px 25px var(--box-glow);
+  text-align: center;
+  z-index: 10;
+  font-family: 'Orbitron', sans-serif;
+  backdrop-filter: blur(10px);
+}
+
+.contact-section p {
+  margin: 0;
+  font-size: 20px;
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--accent);
+  letter-spacing: 3px;
+}
+
+.hydra-text {
+  color: #fff;
+  text-shadow: 0 0 20px var(--accent), 0 0 40px var(--accent);
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-decoration: none;
+  transition: text-shadow 0.3s ease;
+}
+
+.hydra-text:hover {
+  text-shadow: 0 0 30px var(--accent), 0 0 60px var(--accent), 0 0 80px var(--accent);
+}
+
+
+
+@media (max-width: 600px) {
+  .card {
+    padding: 30px;
+  }
+
+  .card h1 {
+    font-size: 28px;
+  }
+
+}
