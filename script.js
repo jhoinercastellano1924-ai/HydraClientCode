@@ -40,8 +40,15 @@ function showScreen(name) {
   document.getElementById(name === "auth" ? "authScreen" : "converterScreen").classList.add("active");
 }
 
+function clearAllData() {
+  if (confirm("¿Borrar TODO (usuarios y sesión)? Esto no se puede deshacer.")) {
+    localStorage.removeItem("hydra_users");
+    localStorage.removeItem("hydra_session");
+    location.reload();
+  }
+}
+
 function downloadUsers() {
-  var users = JSON.parse(localStorage.getItem("hydra_users") || "[]");
   if (users.length === 0) { alert("No hay usuarios registrados en este navegador"); return; }
   var text = "=== HYDRA CLIENT CODE - USUARIOS REGISTRADOS ===\r\n";
   text += "Fecha: " + new Date().toLocaleString() + "\r\n";
@@ -57,9 +64,22 @@ function downloadUsers() {
   a.click();
 }
 
+// Limpia localStorage corrupto al cargar
+try {
+  var usersData = localStorage.getItem("hydra_users");
+  var sessionData = localStorage.getItem("hydra_session");
+  if (usersData) { JSON.parse(usersData); }
+  if (sessionData) { JSON.parse(sessionData); }
+} catch(e) {
+  localStorage.removeItem("hydra_users");
+  localStorage.removeItem("hydra_session");
+  console.log("localStorage limpiado por datos corruptos");
+}
+
 try {
   var sessionData = localStorage.getItem("hydra_session");
   var session = sessionData ? JSON.parse(sessionData) : null;
+  console.log("Sesión al cargar:", session);
   if (session && session.username) {
     showScreen("converter");
     var ud = document.getElementById("userDisplay");
@@ -112,6 +132,7 @@ function register() {
   users.push({ username: username, password: password });
   localStorage.setItem("hydra_users", JSON.stringify(users));
   localStorage.setItem("hydra_session", JSON.stringify({ username: username, password: password }));
+  console.log("Registrado:", username);
   var userDisplay = document.getElementById("userDisplay");
   if (userDisplay) userDisplay.textContent = "Bienvenido, " + username;
   showScreen("converter");
@@ -124,11 +145,14 @@ function login() {
   if (!input || !password) { msg("Todos los campos son obligatorios", true); return; }
 
   var users = JSON.parse(localStorage.getItem("hydra_users") || "[]");
+  console.log("Usuarios guardados:", users);
+  console.log("Intentando login con:", input, password);
   var user = users.find(function(u) { return u.username === input && u.password === password; });
 
   if (!user) { msg("Usuario o contraseña incorrectos", true); return; }
 
   localStorage.setItem("hydra_session", JSON.stringify(user));
+  console.log("Login exitoso:", user);
   var userDisplay = document.getElementById("userDisplay");
   if (userDisplay) userDisplay.textContent = "Bienvenido, " + user.username;
   showScreen("converter");
